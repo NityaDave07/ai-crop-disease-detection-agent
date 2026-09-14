@@ -149,7 +149,7 @@ def get_gemini_diagnosis(disease_name, user_context):
 
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+        gemini_model = genai.GenerativeModel('gemini-3.6-flash')
 
         lang = normalize_lang(user_context.get("lang"))
         lang_name = SUPPORTED_LANGS[lang]
@@ -302,7 +302,7 @@ def translate():
 
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+        gemini_model = genai.GenerativeModel('gemini-3.6-flash')
         lang_name = SUPPORTED_LANGS[lang]
 
         # Ask for strict JSON array output to keep ordering.
