@@ -19,7 +19,7 @@ Please follow these guidelines carefully to ensure a smooth and professional con
 
 ## 🚀 How to Contribute
 
-Follow these steps in order:
+Follow these steps in order
 
 ### 1. Fork the Repository
 
