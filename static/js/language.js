@@ -12,12 +12,12 @@
   const LANGS = {
     en: 'English',
     hi: 'Hindi (हिन्दी)',
+    gj: 'Gujarati (ગુજરાતી)',
     te: 'Telugu (తెలుగు)',
     ta: 'Tamil (தமிழ்)',
     kn: 'Kannada (ಕನ್ನಡ)',
     ml: 'Malayalam (മലയാളം)',
     pa: 'Punjabi (ਪੰਜਾਬੀ)',
-    bho: 'Bhojpuri (भोजपुरी)',
   };
 
   function getLang() {
