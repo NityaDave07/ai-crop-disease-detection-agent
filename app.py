@@ -330,66 +330,91 @@ def get_diagnosis():
 # --- Translation endpoint (UI multi-language support) ---
 @app.route('/translate', methods=['POST'])
 def translate():
-    if not GEMINI_API_KEY:
-        return jsonify({"error": "Gemini API key not configured on the backend (GEMINI_API_KEY)."}), 500
-
     data = request.get_json() or {}
+
     lang = normalize_lang(data.get("lang"))
     texts = data.get("texts") or []
 
     if not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
         return jsonify({"error": "texts must be a list of strings"}), 400
 
-    # Basic safety limits
     if len(texts) > 200:
         return jsonify({"error": "Too many strings to translate in one request"}), 400
 
-    # Short-circuit English
+    # English does not need translation
     if lang == "en":
         return jsonify({"translations": texts})
+
+    # If Gemini key is missing, return original text instead of crashing
+    if not GEMINI_API_KEY:
+        print("Translation fallback: Gemini API key not configured.")
+        return jsonify({
+            "translations": texts,
+            "fallback": True
+        })
 
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         gemini_model = genai.GenerativeModel('gemini-3.6-flash')
+
         lang_name = SUPPORTED_LANGS[lang]
 
-        # Ask for strict JSON array output to keep ordering.
-        prompt = f"""
-Translate the following UI strings into {lang_name}.
-Rules:
-- Return ONLY a valid JSON array of strings (no markdown, no explanation).
-- Keep ordering exactly the same.
-- Keep numbers, URLs, and units unchanged.
-- Keep product/app name "AI Crop Doctor" as-is.
+        numbered_texts = "\n".join(
+            f"{i+1}. {text}" for i, text in enumerate(texts)
+        )
 
-Strings to translate (JSON array):
-{json.dumps(texts, ensure_ascii=False)}
+        prompt = f"""
+Translate each of the following texts into {lang_name}.
+
+IMPORTANT:
+- Keep the same number of texts.
+- Keep the same order.
+- Do not add explanations.
+- Return ONLY the translated texts.
+- Each translated text must be on a separate line.
+
+Texts:
+{numbered_texts}
 """
 
         response = gemini_model.generate_content(prompt)
-        raw = (response.text or "").strip()
 
-        # Try to parse JSON array; if model wrapped in code fences, strip them.
-        if raw.startswith("```"):
-            raw = raw.strip("`")
-            raw = raw.replace("json", "", 1).strip()
+        if not response or not response.text:
+            print("Translation fallback: Gemini returned an empty response.")
+            return jsonify({
+                "translations": texts,
+                "fallback": True
+            })
 
-        translated = json.loads(raw)
-        if not isinstance(translated, list):
-            raise ValueError("Translation response is not a JSON array")
+        translated = [
+            line.strip()
+            for line in response.text.strip().splitlines()
+            if line.strip()
+        ]
 
-        # Ensure length match
+        # Make sure we received the expected number of translations
         if len(translated) != len(texts):
-            # Fallback: pad/trim to match
-            translated = (translated + texts)[: len(texts)]
+            print("Translation fallback: Unexpected number of translations.")
+            return jsonify({
+                "translations": texts,
+                "fallback": True
+            })
 
-        return jsonify({"translations": translated})
+        return jsonify({
+            "translations": translated,
+            "fallback": False
+        })
+
     except Exception as e:
-        print(f"ERROR during translation: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": f"Translation error: {e}"}), 500
+        # Handles Gemini 429 quota errors and other API failures
+        print(f"Translation API error: {e}")
+        print("Using original English text as translation fallback.")
 
+        return jsonify({
+            "translations": texts,
+            "fallback": True
+        })
+        
 # --- History Endpoint ---
 @app.route('/history', methods=['GET'])
 def get_history():
