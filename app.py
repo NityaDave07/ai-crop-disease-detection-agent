@@ -141,8 +141,6 @@ def load_resources():
         traceback.print_exc()
         return False
 
-
-```python
 # --- Gemini Integration ---
 def get_gemini_diagnosis(disease_name, user_context):
 
@@ -243,7 +241,7 @@ For confirmation and crop-specific treatment recommendations, consult your neare
         print(f"Gemini API error: {e}")
         print("Using fallback report.")
         return fallback_report
-```
+
 
 # --- Prediction Endpoint ---
 @app.route('/predict', methods=['POST'])
