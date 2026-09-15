@@ -24,12 +24,12 @@ except Exception:
 SUPPORTED_LANGS = {
     "en": "English",
     "hi": "Hindi",
+    "gj": "Gujarati",
     "te": "Telugu",
     "ta": "Tamil",
     "kn": "Kannada",
     "ml": "Malayalam",
     "pa": "Punjabi",
-    "bho": "Bhojpuri",
 }
 
 def normalize_lang(lang: str) -> str:
